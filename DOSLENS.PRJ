@@ -1,0 +1,5 @@
+doslens (doslens.c vga.h types.h fix.h)
+gif (gif.c gif.h types.h)
+vga (vga.c vga.h types.h)
+fix (fix.c fix.h)
+
