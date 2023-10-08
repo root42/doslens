@@ -23,7 +23,6 @@
 long SIN[ SIN_SIZE + COS_OFF ];
 long *COS = SIN + COS_OFF;
 struct image *img = NULL;
-byte pal_xlat[64];
 int lens[LENS_SIZE][LENS_SIZE];
 byte backup[LENS_SIZE*LENS_SIZE];
 
@@ -68,13 +67,12 @@ void restore_rect(byte *src, int w, int h, byte *dst, int dst_x, int dst_y, int 
 void init_pal()
 {
     int i;
-    set_palette((byte *)img->palette);
     for(i = 0; i < 64; ++i) {
-        pal_xlat[i] = 79 -
-            ((int)img->palette[i][0]
-             + (int)img->palette[i][1]
-             + (int)img->palette[i][2]) / 12;
+        img->palette[i+64][0] = img->palette[i][0];
+        img->palette[i+64][1] = img->palette[i][1];
+        img->palette[i+64][2] = MIN(img->palette[i][2] + 32, 63);
     }
+    set_palette((byte *)img->palette);
 }
 
 void init_lens()
@@ -125,7 +123,7 @@ void draw_lens(long t)
             pos = temp + x;
 	    col = img->data[pos + off];
 	    if( col != 0 ) {
-                col = pal_xlat[col];
+                col = col + 64;
 	    }
 	    VGA[pos] = col;
         }
