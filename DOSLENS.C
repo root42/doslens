@@ -13,8 +13,8 @@
 #include "vga.h"
 #include "pal.h"
 
-#define SIN_SIZE 512
-#define COS_OFF 128
+#define SIN_SIZE 1024
+#define COS_OFF 256
 /* Lens diameter and radius */
 #define LENS_SIZE 80
 #define LENS_R (LENS_SIZE>>1)
@@ -39,7 +39,7 @@ void init_sin()
     }
 }
 
-void liss(int *x, int *y, int t)
+void liss(int *x, int *y, long t)
 {
     const long scale_x = TO_FIX(110);
     const long scale_y = TO_FIX(60);
