@@ -23,10 +23,11 @@
 long SIN[ SIN_SIZE + COS_OFF ];
 long *COS = SIN + COS_OFF;
 struct image *img = NULL;
+byte pal_xlat[64];
 int lens[LENS_SIZE][LENS_SIZE];
 byte backup[LENS_SIZE*LENS_SIZE];
 
-int lens_x = 120, lens_y = 50;
+int lens_x = 160, lens_y = 100;
 
 void init_sin()
 {
@@ -40,9 +41,10 @@ void init_sin()
 
 void liss(int *x, int *y, int t)
 {
-    const long scale = TO_FIX(50);
-    *x = TO_LONG(fix_mul(COS[(t*2+64) % SIN_SIZE], scale));
-    *y = TO_LONG(fix_mul(COS[(t*3) % SIN_SIZE], scale));
+    const long scale_x = TO_FIX(110);
+    const long scale_y = TO_FIX(60);
+    *x = 120 + TO_LONG(fix_mul(COS[(t*2+64) % SIN_SIZE], scale_x));
+    *y = 60 + TO_LONG(fix_mul(COS[(t*3) % SIN_SIZE], scale_y));
 }
 
 void backup_rect(byte *dst, int w, int h, byte *src, int src_x, int src_y, int src_w, int src_h)
@@ -60,6 +62,18 @@ void restore_rect(byte *src, int w, int h, byte *dst, int dst_x, int dst_y, int 
     (void)dst_h;
     for(i = 0; i < h; ++i) {
         memcpy(dst + dst_x + (i + dst_y) * dst_w, src + i * w, w);
+    }
+}
+
+void init_pal()
+{
+    int i;
+    set_palette((byte *)img->palette);
+    for(i = 0; i < 64; ++i) {
+        pal_xlat[i] = 79 -
+            ((int)img->palette[i][0]
+             + (int)img->palette[i][1]
+             + (int)img->palette[i][2]) / 12;
     }
 }
 
@@ -91,19 +105,17 @@ void init_lens()
         }
     }
     memcpy(VGA, img->data, 64000);
+    liss(&lens_x, &lens_y, 0);
     backup_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 void draw_lens(long t)
 {
-    static dx = 1, dy = 1;
     byte col;
     int x, y, temp, pos;
     int off;
     restore_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
-    lens_x += dx; lens_y += dy;
-    if(lens_x <= 0 || lens_x + LENS_SIZE >= SCREEN_WIDTH) dx = -dx;
-    if(lens_y <= 0 || lens_y + LENS_SIZE >= SCREEN_HEIGHT) dy = -dy;
+    liss(&lens_x, &lens_y, t);
     backup_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
     for(y = 0; y < LENS_SIZE; ++y) {
         temp = lens_x + (y + lens_y) * SCREEN_WIDTH;
@@ -113,9 +125,8 @@ void draw_lens(long t)
             pos = temp + x;
 	    col = img->data[pos + off];
 	    if( col != 0 ) {
-	        col = 64 + (col >> 2);
+                col = pal_xlat[col];
 	    }
-            /* col = 1; */
 	    VGA[pos] = col;
         }
     }
@@ -123,10 +134,8 @@ void draw_lens(long t)
 
 int main()
 {
-    long t=0;
+    long t=1;
     char kc=0;
-    /* byte far *buf=farmalloc(64000); */
-    /* BUF=buf; */
 
     img = load_gif("LENSPIC.GIF", 0);
     if(img == NULL ) {
@@ -135,7 +144,7 @@ int main()
     }
     init_sin();
     set_graphics_mode();
-    set_palette((byte *)img->palette);
+    init_pal();
     init_lens();
     while(kc!=0x1b) {
         if(kbhit()) kc=getch();
