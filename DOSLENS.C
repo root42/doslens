@@ -3,6 +3,7 @@
 #include <alloc.h>
 #include <conio.h>
 #include <dos.h>
+#include <limits.h>
 #include <math.h>
 #include <mem.h>
 
@@ -66,9 +67,9 @@ void init_lens()
 {
     int x, y, x2, y2, ix, iy, r2 = LENS_R * LENS_R, offset, d = LENS_ZOOM;
     const int LS = LENS_SIZE/2;
-    for(y = 0; y < LS; ++y) {
+    for(y = 0; y <= LS; ++y) {
         y2 = y * y;
-        for(x = 0; x < LS >> 1; ++x) {
+	for(x = 0; x <= LS; ++x) {
             x2 = x * x;
             if( x2 + y2 < r2 ) {
 		float shift = (float)d / sqrt(d*d - (x2 + y2 - r2));
@@ -81,10 +82,10 @@ void init_lens()
                 lens[LS + y][LS - x] = -offset;
                 lens[LS - y][LS + x] = offset;
             } else {
-                lens[LS - y][LS - x] = -1;
-                lens[LS + y][LS + x] = -1;
-                lens[LS + y][LS - x] = -1;
-                lens[LS - y][LS + x] = -1;
+		lens[LS - y][LS - x] = INT_MAX;
+		lens[LS + y][LS + x] = INT_MAX;
+		lens[LS + y][LS - x] = INT_MAX;
+		lens[LS - y][LS + x] = INT_MAX;
             }
 
         }
@@ -108,7 +109,7 @@ void draw_lens(long t)
         temp = lens_x + (y + lens_y) * SCREEN_WIDTH;
         for(x = 0; x < LENS_SIZE; ++x) {
 	    off = lens[y][x];
-	    if(off == -1) continue;
+	    if(off == INT_MAX) continue;
             pos = temp + x;
 	    col = img->data[pos + off];
 	    if( col != 0 ) {
