@@ -70,7 +70,7 @@ void init_pal()
     for(i = 0; i < 64; ++i) {
         img->palette[i+64][0] = img->palette[i][0];
         img->palette[i+64][1] = img->palette[i][1];
-        img->palette[i+64][2] = MIN(img->palette[i][2] + 32, 63);
+	img->palette[i+64][2] = MIN(img->palette[i][2] + 16, 63);
     }
     set_palette((byte *)img->palette);
 }
@@ -121,10 +121,7 @@ void draw_lens(long t)
 	    off = lens[y][x];
 	    if(off == INT_MAX) continue;
             pos = temp + x;
-	    col = img->data[pos + off];
-	    if( col != 0 ) {
-                col = col + 64;
-	    }
+	    col = img->data[pos + off] + 64;
 	    VGA[pos] = col;
         }
     }
