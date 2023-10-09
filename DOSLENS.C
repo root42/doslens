@@ -15,17 +15,17 @@
 
 #define SIN_SIZE 1024
 #define COS_OFF 256
-/* Lens diameter and radius */
+
+long SIN[ SIN_SIZE + COS_OFF ];
+long *COS = SIN + COS_OFF;
+
 #define LENS_SIZE 80
 #define LENS_R (LENS_SIZE>>1)
 #define LENS_ZOOM 16
 
-long SIN[ SIN_SIZE + COS_OFF ];
-long *COS = SIN + COS_OFF;
 struct image *img = NULL;
 int lens[LENS_SIZE][LENS_SIZE];
 byte backup[LENS_SIZE*LENS_SIZE];
-
 int lens_x, lens_y;
 
 void init_sin()
@@ -68,8 +68,8 @@ void init_pal()
 {
     int i;
     for(i = 0; i < 64; ++i) {
-        img->palette[i+64][0] = img->palette[i][0];
-        img->palette[i+64][1] = img->palette[i][1];
+	img->palette[i+64][0] = img->palette[i][0];
+	img->palette[i+64][1] = img->palette[i][1];
 	img->palette[i+64][2] = MIN(img->palette[i][2] + 16, 63);
     }
     set_palette((byte *)img->palette);
@@ -77,30 +77,30 @@ void init_pal()
 
 void init_lens()
 {
-    int x, y, x2, y2, ix, iy, r2 = LENS_R * LENS_R, offset, d = LENS_ZOOM;
-    const int LS = LENS_SIZE/2;
+    float d = LENS_ZOOM;
+    int x, y, x2, y2, r2 = LENS_R * LENS_R, ix, iy, offset;
+    const int LS = LENS_SIZE / 2;
     for(y = 0; y <= LS; ++y) {
-        y2 = y * y;
+	y2 = y*y;
 	for(x = 0; x <= LS; ++x) {
-            x2 = x * x;
-            if( x2 + y2 < r2 ) {
-		float shift = (float)d / sqrt(d*d - (x2 + y2 - r2));
-                ix = x * (shift - 1);
-                iy = y * (shift - 1);
-		offset = (iy * SCREEN_WIDTH + ix);
+	    x2 = x*x;
+	    if( x2 + y2 < r2 ) {
+		float shift = d / sqrt(d*d - (x2 + y2 - r2));
+		ix = x * (shift - 1);
+		iy = y * (shift - 1);
+		offset = iy * SCREEN_WIDTH + ix;
 		lens[LS - y][LS - x] = -offset;
-		lens[LS + y][LS + x] = offset;
-		offset = (-iy * SCREEN_WIDTH + ix);
+		lens[LS + y][LS + x] =  offset;
+		offset = -iy * SCREEN_WIDTH + ix;
 		lens[LS + y][LS - x] = -offset;
-		lens[LS - y][LS + x] = offset;
-            } else {
+		lens[LS - y][LS + x] =  offset;
+	    } else {
 		lens[LS - y][LS - x] = INT_MAX;
 		lens[LS + y][LS + x] = INT_MAX;
 		lens[LS + y][LS - x] = INT_MAX;
 		lens[LS - y][LS + x] = INT_MAX;
-            }
-
-        }
+	    }
+	}
     }
     memcpy(VGA, img->data, 64000);
     liss(&lens_x, &lens_y, 0);
@@ -109,21 +109,17 @@ void init_lens()
 
 void draw_lens(long t)
 {
-    byte col;
-    int x, y, temp, pos;
-    int off;
+    int temp, x, y, off;
     restore_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
     liss(&lens_x, &lens_y, t);
     backup_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
     temp = lens_x + lens_y * SCREEN_WIDTH;
     for(y = 0; y < LENS_SIZE; ++y, temp += SCREEN_WIDTH) {
-        for(x = 0; x < LENS_SIZE; ++x) {
+	for(x = 0; x < LENS_SIZE; ++x) {
 	    off = lens[y][x];
 	    if(off == INT_MAX) continue;
-            pos = temp + x;
-	    col = img->data[pos + off] + 64;
-	    VGA[pos] = col;
-        }
+	    VGA[temp + x] = img->data[temp + x + off] + 64;
+	}
     }
 }
 
