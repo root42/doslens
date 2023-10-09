@@ -26,7 +26,7 @@ struct image *img = NULL;
 int lens[LENS_SIZE][LENS_SIZE];
 byte backup[LENS_SIZE*LENS_SIZE];
 
-int lens_x = 160, lens_y = 100;
+int lens_x, lens_y;
 
 void init_sin()
 {
@@ -85,8 +85,8 @@ void init_lens()
             x2 = x * x;
             if( x2 + y2 < r2 ) {
 		float shift = (float)d / sqrt(d*d - (x2 + y2 - r2));
-                ix = x * shift - x;
-                iy = y * shift - y;
+                ix = x * (shift - 1);
+                iy = y * (shift - 1);
                 offset = (iy * SCREEN_WIDTH + ix);
                 lens[LS - y][LS - x] = -offset;
                 lens[LS + y][LS + x] = offset;
