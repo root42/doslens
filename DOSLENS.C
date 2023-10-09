@@ -87,12 +87,12 @@ void init_lens()
 		float shift = (float)d / sqrt(d*d - (x2 + y2 - r2));
                 ix = x * (shift - 1);
                 iy = y * (shift - 1);
-                offset = (iy * SCREEN_WIDTH + ix);
-                lens[LS - y][LS - x] = -offset;
-                lens[LS + y][LS + x] = offset;
-                offset = (-iy * SCREEN_WIDTH + ix);
-                lens[LS + y][LS - x] = -offset;
-                lens[LS - y][LS + x] = offset;
+		offset = (iy * SCREEN_WIDTH + ix);
+		lens[LS - y][LS - x] = -offset;
+		lens[LS + y][LS + x] = offset;
+		offset = (-iy * SCREEN_WIDTH + ix);
+		lens[LS + y][LS - x] = -offset;
+		lens[LS - y][LS + x] = offset;
             } else {
 		lens[LS - y][LS - x] = INT_MAX;
 		lens[LS + y][LS + x] = INT_MAX;
@@ -115,8 +115,8 @@ void draw_lens(long t)
     restore_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
     liss(&lens_x, &lens_y, t);
     backup_rect(backup, LENS_SIZE, LENS_SIZE, VGA, lens_x, lens_y, SCREEN_WIDTH, SCREEN_HEIGHT);
-    for(y = 0; y < LENS_SIZE; ++y) {
-        temp = lens_x + (y + lens_y) * SCREEN_WIDTH;
+    temp = lens_x + lens_y * SCREEN_WIDTH;
+    for(y = 0; y < LENS_SIZE; ++y, temp += SCREEN_WIDTH) {
         for(x = 0; x < LENS_SIZE; ++x) {
 	    off = lens[y][x];
 	    if(off == INT_MAX) continue;
